@@ -1,10 +1,14 @@
 import smbus
 import math
-from time
+import time
 import signal
 import csv
-import RPi.GPIO as GPIO
+import numpy as np
+import warnings
+#from time import sleep
+from numpy.linalg import norm
 from quaternion import kuaternion
+import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BCM)
 DEV_ADDR = 0x68         # device address
@@ -112,39 +116,47 @@ class MadgwickAHRS:
         self.quaternion = kuaternion(q / norm(q))  # normalise quaternion
 
         quaternion = self.quaternion
-        r, p, y = kuaternion.to_euler123(quaternion)
+        r, p, y = kuaternion.to_euler_angles(quaternion)
 
         return(r, p, y)
 
-time = 0
+#time = 0
 dt   = 0
+total_time = 0
 calculate_time = 10
 gyroscope     = [0, 0, 0]
 accelerometer = [0, 0, 0]
 
+md = MadgwickAHRS()
+
 gp_out = 4
 GPIO.setup(gp_out, GPIO.OUT)
 servo = GPIO.PWM(gp_out, 50)
-servo.start(0)
+servo.start(0.0)
 
 servo.ChangeDutyCycle(2.5)
 time.sleep(0.5)
 
-servo.ChangeDutyCycle(7.25)
+servo.ChangeDutyCycle(0.0)
 time.sleep(0.5)
 
-servo.ChangeDutyCycle(12)
-time.sleep(0.5)
-
-servo.ChangeDutyCycle(7.25)
-time.sleep(0.5)
-
-while 1:
-    start = time.time()
+'''while 1:
+    #start = time.time()
 
     x_gyro,  y_gyro,  z_gyro  = get_gyro_data_deg()
     x_accel, y_accel, z_accel = get_accel_data_g()
-
+    
+    gyroscope     = [x_gyro , y_gyro , z_gyro]
+    accelerometer = [x_accel, y_accel, z_accel]
+    
+    r, p, y = md.update_imu(gyroscope, accelerometer)
+    roll  = r
+    pitch = p
+    yaw   = y
+    #print(math.degrees(roll) ,"x radian")
+    #print(math.degrees(pitch),"y radian")
+    print(math.degrees(yaw),"z radian")
+    
     with open('measurement.csv', 'a') as measurement_file:
         writer = csv.DictWriter(measurement_file, fieldnames=fieldnames)
         writer.writerow({'x_accel':x_accel,
@@ -155,8 +167,12 @@ while 1:
                          'z_gyro' :z_gyro ,
                          'dt'     :dt ,})
 
-    dt = time.time() - start
+    #dt = time.time() - start
 
     total_time += dt
     if total_time > calculate_time:
         break
+        
+    #elif int(total_time)/10 == 0 :
+    
+        #servo.ChangeDutyCycle(0.0)'''
