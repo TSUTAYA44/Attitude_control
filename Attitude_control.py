@@ -3,8 +3,10 @@ import math
 from time
 import signal
 import csv
+import RPi.GPIO as GPIO
 from quaternion import kuaternion
 
+GPIO.setmode(GPIO.BCM)
 DEV_ADDR = 0x68         # device address
 ACCEL_XOUT = 0x3b
 ACCEL_YOUT = 0x3d
@@ -119,6 +121,23 @@ dt   = 0
 calculate_time = 10
 gyroscope     = [0, 0, 0]
 accelerometer = [0, 0, 0]
+
+gp_out = 4
+GPIO.setup(gp_out, GPIO.OUT)
+servo = GPIO.PWM(gp_out, 50)
+servo.start(0)
+
+servo.ChangeDutyCycle(2.5)
+time.sleep(0.5)
+
+servo.ChangeDutyCycle(7.25)
+time.sleep(0.5)
+
+servo.ChangeDutyCycle(12)
+time.sleep(0.5)
+
+servo.ChangeDutyCycle(7.25)
+time.sleep(0.5)
 
 while 1:
     start = time.time()
