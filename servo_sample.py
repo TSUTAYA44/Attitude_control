@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 import RPi.GPIO as GPIO
 import time
-
+from gpiozero import AngularServo
+GPIO.setmode(GPIO.BCM)
 #SG92Rをコントロールするための
 class SG90_92R_Class:
     # mPin : GPIO Number (PWM)
@@ -28,30 +29,50 @@ class SG90_92R_Class:
     """終了処理"""
     def Cleanup(self):
         #サーボを10degにセットしてから、インプットモードにしておく
-        self.SetPos(90)
+        self.SetPos(0)
         time.sleep(1)
         GPIO.setup(self.mPin, GPIO.IN)
 
 """コントロール例"""
-if __name__ == '__main__':
+'''if __name__ == '__main__':
     #Useing GPIO No.  to idetify channel
     GPIO.setmode(GPIO.BCM)
     Servo = SG90_92R_Class(Pin=4,ZeroOffsetDuty=0)
     try:
         while True:
             Servo.SetPos(0)
-            time.sleep(1)
+            time.sleep(0.5)
+            Servo.SetPos(45)
+            time.sleep(0.5)
             Servo.SetPos(90)
-            time.sleep(1)
-            Servo.SetPos(180)
-            time.sleep(1)
-            Servo.SetPos(90)
-            time.sleep(1)
+            time.sleep(0.5)
+            Servo.SetPos(0)
+            time.sleep(0.5)
     except KeyboardInterrupt  :         #Ctl+Cが押されたらループを終了
         print("\nCtl+C")
     except Exception as e:
         print(str(e))
     finally:
-        Servo.Cleanup()
-        GPIO.cleanup()
-        print("\nexit program")
+        #Servo.Cleanup()
+        #GPIO.cleanup()
+        print("\nexit program")'''
+GPIO.setmode(GPIO.BCM)
+#Servo = SG90_92R_Class(Pin=4,ZeroOffsetDuty=0)
+#Servo.SetPos(0)
+#time.sleep(0.5)
+#Servo.SetPos(45)
+#time.sleep(0.5)
+#Servo.SetPos(90)
+#time.sleep(0.5)
+#Servo.SetPos(0)
+#time.sleep(0.5)
+
+pig = AngularServo(4, min_pulse_width=0.5/1000, max_pulse_width=2.4/1000)
+pig.angle = 90
+time.sleep(1)
+
+pig.angle = 45
+time.sleep(1)
+
+pig.angle = 0
+time.sleep(1)

@@ -5,10 +5,10 @@ import signal
 import csv
 import numpy as np
 import warnings
-#from time import sleep
 from numpy.linalg import norm
 from quaternion import kuaternion
 import RPi.GPIO as GPIO
+from gpiozero import AngularServo
 
 GPIO.setmode(GPIO.BCM)
 DEV_ADDR = 0x68         # device address
@@ -116,31 +116,48 @@ class MadgwickAHRS:
         self.quaternion = kuaternion(q / norm(q))  # normalise quaternion
 
         quaternion = self.quaternion
-        r, p, y = kuaternion.to_euler_angles(quaternion)
+        r, p, y = kuaternion.to_euler123(quaternion)
 
         return(r, p, y)
 
+#SG92Rをコントロールするための
+class SG90_92R_Class:
+    # mPin : GPIO Number (PWM)
+    # mPwm : Pwmコントロール用のインスタンス
+    # m_Zero_offset_duty :
+
+    """コンストラクタ"""
+    def __init__(self, Pin, ZeroOffsetDuty):
+        self.mPin = Pin
+        self.m_ZeroOffsetDuty = ZeroOffsetDuty
+
+        #GPIOをPWMモードにする
+        GPIO.setup(self.mPin, GPIO.OUT)
+        self.mPwm = GPIO.PWM(self.mPin , 50) # set 20ms / 50 Hz
+
+    """位置セット"""
+    def SetPos(self,pos):
+        #Duty ratio = 2.5%〜12.0% : 0.5ms〜2.4ms : 0 ～ 180deg
+        duty = (12-2.5)/180*pos+2.5 + self.m_ZeroOffsetDuty
+        self.mPwm.start(duty)
+
+    """終了処理"""
+    def Cleanup(self):
+        #サーボを10degにセットしてから、インプットモードにしておく
+        GPIO.setup(self.mPin, GPIO.IN)
+        
 #time = 0
 dt   = 0
-total_time = 0
+total_counts = 0
 calculate_time = 10
 gyroscope     = [0, 0, 0]
 accelerometer = [0, 0, 0]
 
 md = MadgwickAHRS()
 
-gp_out = 4
-GPIO.setup(gp_out, GPIO.OUT)
-servo = GPIO.PWM(gp_out, 50)
-servo.start(0.0)
+pig = AngularServo(4, min_pulse_width=0.5/1000, max_pulse_width=2.4/1000)
 
-servo.ChangeDutyCycle(2.5)
-time.sleep(0.5)
-
-servo.ChangeDutyCycle(0.0)
-time.sleep(0.5)
-
-'''while 1:
+while 1:
     #start = time.time()
 
     x_gyro,  y_gyro,  z_gyro  = get_gyro_data_deg()
@@ -149,15 +166,13 @@ time.sleep(0.5)
     gyroscope     = [x_gyro , y_gyro , z_gyro]
     accelerometer = [x_accel, y_accel, z_accel]
     
-    r, p, y = md.update_imu(gyroscope, accelerometer)
-    roll  = r
-    pitch = p
-    yaw   = y
+    roll, pitch, yaw = md.update_imu(gyroscope, accelerometer)
+    
     #print(math.degrees(roll) ,"x radian")
     #print(math.degrees(pitch),"y radian")
-    print(math.degrees(yaw),"z radian")
+    #print(math.degrees(yaw),"z radian")
     
-    with open('measurement.csv', 'a') as measurement_file:
+    '''with open('measurement.csv', 'a') as measurement_file:
         writer = csv.DictWriter(measurement_file, fieldnames=fieldnames)
         writer.writerow({'x_accel':x_accel,
                          'y_accel':y_accel,
@@ -165,14 +180,17 @@ time.sleep(0.5)
                          'x_gyro' :x_gyro ,
                          'y_gyro' :y_gyro ,
                          'z_gyro' :z_gyro ,
-                         'dt'     :dt ,})
+                         'dt'     :dt ,})'''
 
+    total_counts += int(1) 
     #dt = time.time() - start
 
-    total_time += dt
-    if total_time > calculate_time:
-        break
-        
-    #elif int(total_time)/10 == 0 :
+    print(int(math.degrees(roll)))
     
-        #servo.ChangeDutyCycle(0.0)'''
+    if total_counts % 40 == 0:
+        if int(math.degrees(roll)) >= 0:
+            if int((math.degrees(roll))) <= 90:
+                Servo.SetPos(int(math.degrees(yaw)))
+                Servo.Cleanup()
+                #pig.angle = int(math.degrees(roll))
+                
