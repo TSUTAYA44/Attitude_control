@@ -53,8 +53,8 @@ if __name__ == '__main__':
     except Exception as e:
         print(str(e))
     finally:
-        #Servo.Cleanup()
-        #GPIO.cleanup()
+        Servo.Cleanup()
+        GPIO.cleanup()
         print("\nexit program")
 GPIO.setmode(GPIO.BCM)
 
