@@ -1,8 +1,7 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import RPi.GPIO as GPIO
 import time
-from gpiozero import AngularServo
+
+
 GPIO.setmode(GPIO.BCM)
 #SG92Rをコントロールするための
 class SG90_92R_Class:
@@ -37,7 +36,7 @@ class SG90_92R_Class:
 if __name__ == '__main__':
     #Useing GPIO No.  to idetify channel
     GPIO.setmode(GPIO.BCM)
-    Servo = SG90_92R_Class(Pin=4,ZeroOffsetDuty=0)
+    Servo = SG90_92R_Class(Pin=12,ZeroOffsetDuty=0)
     try:
         while True:
             Servo.SetPos(0)
@@ -56,14 +55,3 @@ if __name__ == '__main__':
         Servo.Cleanup()
         GPIO.cleanup()
         print("\nexit program")
-GPIO.setmode(GPIO.BCM)
-
-pig = AngularServo(4, min_pulse_width=0.5/1000, max_pulse_width=2.4/1000)
-pig.angle = 90
-time.sleep(1)
-
-pig.angle = 45
-time.sleep(1)
-
-pig.angle = 0
-time.sleep(1)
